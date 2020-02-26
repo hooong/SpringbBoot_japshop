@@ -156,5 +156,8 @@
   - terminal에서  `h2/bin`경로에서 `$ ./h2.sh`로 스크립트 파일을 실행시켜준다.
     - ( 필자 맥에서는 permission denied가 떠서 `$ sudo chmod 755 h2.sh`를 통해 해결함. )
   - 최초에는 `jdbc:h2:~/jpashop`로 연결을 하여 `~/jpashop.mv.db`파일을 생성해준다.
+
+  <img width="489" alt="Screen Shot 2020-02-27 at 12 21 07 AM" src="https://user-images.githubusercontent.com/37801041/75359012-14f52d00-58f7-11ea-847c-5bc0b7e2033c.png">
+
   - 이후부터 `jdbc:h2:tcp://localhost/~/jpashop `로 접속을 한다.
     - `h2.sh` 스크립트가 종료되면 데이터 베이스가 동작하지 않는다.
