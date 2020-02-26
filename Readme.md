@@ -141,3 +141,20 @@
 
   - 그럼 이제 템플릿을 변경하고 `Build - Recompile`만으로 새로고침을 하면 변경 내용이 반영되는 것을 확인할 수 있을 것이다.
 
+<br>
+
+### 4. H2 DB 설치
+
+> h2는 가볍고 편리해서 개발이나 테스트 용도로 좋다고 한다.
+
+- [h2 공식 사이트](https://www.h2database.com )
+- [1.4.199 버전 다운로드 링크](https://h2database.com/h2-2019-03-13.zip )
+
+- ##### 데이터 베이스 파일 생성하기
+
+  - 압축을 풀어준다.
+  - terminal에서  `h2/bin`경로에서 `$ ./h2.sh`로 스크립트 파일을 실행시켜준다.
+    - ( 필자 맥에서는 permission denied가 떠서 `$ sudo chmod 755 h2.sh`를 통해 해결함. )
+  - 최초에는 `jdbc:h2:~/jpashop`로 연결을 하여 `~/jpashop.mv.db`파일을 생성해준다.
+  - 이후부터 `jdbc:h2:tcp://localhost/~/jpashop `로 접속을 한다.
+    - `h2.sh` 스크립트가 종료되면 데이터 베이스가 동작하지 않는다.
