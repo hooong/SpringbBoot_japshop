@@ -532,7 +532,64 @@ public class MemberRepository {
 }
 ```
 
+<br>
 
+- #### 회원 서비스 개발
 
+> 회원 리포지토리를 사용하여 실제 회원을 관리하기 위한 비즈니스 로직을 구현한다.
 
+##### 	1. jpashop에 service패키지를 생성
 
+##### 	2. `MemberService` class 파일 생성
+
+```java
+package jpabook.jpashop.service;
+
+import jpabook.jpashop.dommain.Member;
+import jpabook.jpashop.repository.MemberRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@Transactional(readOnly = true)  // 조회 트랜잭션에서는 성능이 좋아진다.
+@RequiredArgsConstructor    // final이 있는 것의 생성자를 만들어줌.
+public class MemberService {
+
+    private final MemberRepository memberRepository;
+
+    // 회원 가입
+    @Transactional   // 바로 아래 메서드에 대해서는 우선순위가 높게 적용
+    public Long join(Member member) {
+        validateDuplicateMember(member);  // 중복 회원 검증
+        memberRepository.save(member);  // persist를 해주면 영속성 컨텍스트에 id값이 생성되어 있는 것이 보장됨.
+
+        return member.getId();
+    }
+
+    // 이렇게만 하면 동시에 같은 이름으로 가입을 하려할때 문제가 생김.
+    // 그래서 이를 방지하기 위해서 db에서 유니크를 써주는 것이 좋음.
+    private void validateDuplicateMember(Member member) {
+        // EXCEPTION
+        List<Member> findMembers = memberRepository.findByName(member.getName());
+        if (!findMembers.isEmpty()) {
+            throw new IllegalStateException("이미 존재하는 회원입니다.");
+        }
+    }
+
+    // 회원 전체 조회
+    public List<Member> findMembers() {
+        return memberRepository.findAll();
+    }
+
+    // 하나의 회원 검색
+    public Member findOne(Long memberId) {
+        return memberRepository.findOne(memberId);
+    }
+}
+```
+
+- 스프링의 필드 인젝션 대신 생성자 주입 방식을 사용한다. 생성자가 하나면 @Autowired를 생략할 수 있으며, 생성자 주입 방식을 사용하면 변경 불가능한 안전한 객체 생성이 가능해진다. 또한 `final`키워드를 추가해 컴파일 시점에서 `memberRepository`를 설정하지 않을 경우의 에러를 체크하기 쉽게 해준다.
+- 그리고 lombok의 `@RequiredArgsConstructor`를 사용하여 자동으로 final이 붙은 필드의 생성자를 만들어 준다.
