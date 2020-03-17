@@ -479,7 +479,58 @@
 2. Test Case로 작성 후 검증
 3. 웹 계층 적용
 
+<br>
 
+## 회원 도메인 개발
+
+- ### 회원 리포지토리 개발
+
+> 회원 엔티티는 이미 개발을 하였으니 이제 이 엔티티를 활용하여 디비에 저장을 하거나 찾아오기 위한 트랜잭션을 만들어주어야 하는데 이것들이 리포지토리에 만들어주면 된다.
+
+##### 	1. jpashop에 repository패키지를 생성
+
+##### 	2. `MemberRepository` class 파일 생성
+
+```java
+package jpabook.jpashop.repository;
+
+import jpabook.jpashop.dommain.Member;
+import org.springframework.stereotype.Repository;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.List;
+
+@Repository
+public class MemberRepository {
+
+    // 엔티티 매니저 의존성 주입
+    @PersistenceContext
+    private EntityManager em;
+
+    // 저장
+    public void save(Member member) {
+        em.persist(member);
+    }
+		
+  	// id를 통한 검색
+    public Member findOne(Long id) {
+        return em.find(Member.class, id);
+    }
+		
+  	// 모든 member 검색
+    public List<Member> findAll() {
+        return em.createQuery("select m from Member m", Member.class).getResultList();  // jpql을 사용한다. (Sql과 다르게 엔티티로 찾음)
+    }
+
+    // 이름으로 멤버를 찾는 로직
+    public List<Member> findByName(String name) {
+        return em.createQuery("select m from Member m where m.name = :name", Member.class)
+                .setParameter("name", name)
+                .getResultList();
+    }
+}
+```
 
 
 
