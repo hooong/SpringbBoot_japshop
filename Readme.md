@@ -453,5 +453,35 @@
 
 #### 애플리케이션 아키텍쳐
 
+##### 계층형 구조를 사용 ( Controller -> Service -> Repository -> DB [Domain은 어디서든 접근 가능] )
+
+- Controller, web : 웹 계층
+- Service : 비즈니스 로직, 트랜잭션 처리
+- Repository : JPA를 직접 사용하는 계층, 엔티티 매니저 사용
+- Domain : 엔티티가 모여있는 계층, 모든 계층에서 사용
+
+<br>
+
+##### 패키지 구조
+
+- Jpabook.jpashop
+  - domain
+  - exception
+  - repository
+  - service
+  - web
+
+<br>
+
+##### 개발 순서
+
+1. Service, Repository 계층 개발
+2. Test Case로 작성 후 검증
+3. 웹 계층 적용
+
+
+
+
+
 
 
