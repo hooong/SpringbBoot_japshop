@@ -12,6 +12,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberRepository {
 
+    // @PersistenceContext의 경우 최신 스프링 데이터 jpa에서 @Autowired로도 가능하게 만들어져있다.
+    // 따라서 생성자 주입 방식으로 방식을 통일 시켜줄 수 있다.
     private final EntityManager em;
 
     public void save(Member member) {

@@ -593,3 +593,127 @@ public class MemberService {
 
 - 스프링의 필드 인젝션 대신 생성자 주입 방식을 사용한다. 생성자가 하나면 @Autowired를 생략할 수 있으며, 생성자 주입 방식을 사용하면 변경 불가능한 안전한 객체 생성이 가능해진다. 또한 `final`키워드를 추가해 컴파일 시점에서 `memberRepository`를 설정하지 않을 경우의 에러를 체크하기 쉽게 해준다.
 - 그리고 lombok의 `@RequiredArgsConstructor`를 사용하여 자동으로 final이 붙은 필드의 생성자를 만들어 준다.
+
+<br>
+
+- #### 회원가입 기능 테스트
+
+> 여기서는 두 가지를 테스트해본다.
+>
+> - 회원가입 로직인 join이 제대로 작동하는지
+> - 이름이 같은 중복회원이 존재하는지
+
+1. `shift + command + T`로 테스트 파일을 생성.
+
+2. 테스트 케이스 작성
+
+   ```java
+   package jpabook.jpashop.service;
+   
+   import jpabook.jpashop.dommain.Member;
+   import jpabook.jpashop.repository.MemberRepository;
+   import org.junit.Test;
+   import org.junit.runner.RunWith;
+   import org.springframework.beans.factory.annotation.Autowired;
+   import org.springframework.boot.test.context.SpringBootTest;
+   import org.springframework.test.annotation.Rollback;
+   import org.springframework.test.context.junit4.SpringRunner;
+   import org.springframework.transaction.annotation.Transactional;
+   
+   import javax.persistence.EntityManager;
+   
+   import static org.junit.Assert.*;
+   
+   @RunWith(SpringRunner.class)    // 스프링과 테스트 통합하기 위함.
+   @SpringBootTest  // 스프링 컨네이너 안에서 테스트를 하기 위함. 없으면 @Autowired가 안됨.
+   @Transactional  // 이 어노테이션이 Test에서 쓰이면 자동으로 롤백을 함.
+   public class MemberServiceTest {
+   
+       @Autowired
+       MemberService memberService;
+       @Autowired
+       MemberRepository memberRepository;
+       @Autowired
+       EntityManager em;
+   
+       @Test
+       public void 회원가입() throws Exception {
+           //given
+           Member member = new Member();
+           member.setName("Hong");
+   
+           //when
+           Long savedId = memberService.join(member);
+   
+           //then
+           // em.flush();
+           // 기존 테스트에서는 자동으로 Rollback을하고 db로 flush가 되지 않기 때문에 영속성 컨텍스트에만 들어가고 rollback이 된다.
+           // 그래서 EntityManager를 주입받고 flush를 해주면 insert 쿼리가 나가는 것을 로그에서 확인가능하고
+           // @Rollback(false) 어노테이션을 사용해 실제 디비에서도 확인해볼 수 있음.
+           assertEquals(member, memberRepository.findOne(savedId));
+       }
+   
+       // try-catch를 사용안해도 되는 방법이다.
+       @Test(expected = IllegalStateException.class)
+       public void 중복_회원_예외() throws Exception {
+           //given
+           Member member1 = new Member();
+           member1.setName("hong1");
+   
+           Member member2 = new Member();
+           member2.setName(("hong1"));
+   
+           //when
+           memberService.join(member1);
+           memberService.join(member2); // 여기서 예외 발생.
+   
+           //then
+           fail("예외가 발생해야 한다.");
+       }
+   }
+   ```
+
+   > - @Rollback(false) 에노테이션이나 flush()를 해주지 않으면 insert가 날아가는 쿼리문을 확인할 수 없다.
+   >
+   > - @Test(expected = IllegalStateException.class)을 사용하면 아래 코드처럼 try-catch를 안써주어도 된다.
+   >
+   >   ```java
+   >     memberService.join(member1);
+   >     try {
+   >       memberService.join(member2);
+   >     } catch (IllegalStateException e) {
+   >       return;
+   >     }
+   >   ```
+   >
+   > - Test를 할때에는 given -> when -> then 의 구조를 가지고 하는 것이 일반적이다.
+   >
+   >   ( 주어지는 것이 있고(given), 무엇을 할때(when), 결과는(then)의 구조이다.)
+   >
+   > - Test를 할때 database를 독립된 java메모리에서 테스트를 한다면 실제 db를 건드리지 않아도 되고 반복적인 테스트에 더욱 좋다. 따라서 `test/resources/application.yml`을 만들고 test에서 사용할 애플리케이션 설정을 등록해주면 된다. 
+   >
+   >   - Application.yml
+   >
+   >     ```yml
+   >     spring:
+   >     #  datasource:
+   >     #    url: jdbc:h2:mem:test
+   >     #    username: sa
+   >     #    password:
+   >     #    driver-class-name: org.h2.Driver
+   >     #
+   >     #  jpa:
+   >     #    hibernate:
+   >     #      ddl-auto: create
+   >     #    properties:
+   >     #      hibernate:
+   >     ##        show_sql: true
+   >     #        format_sql: true
+   >     
+   >     logging:
+   >       level:
+   >         org.hibernate.SQL: debug
+   >         org.hibernate.type: trace
+   >     ```
+   >
+   >     - 원래는 `url: jdbc:h2:mem:test`를 써주어야하지만 스프링 부트에서는 없어도 자동으로 메모리에서 테스트를 하게끔 설정을 해준다고 한다. 따라서 없어도 된다.
