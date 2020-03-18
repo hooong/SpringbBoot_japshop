@@ -717,3 +717,55 @@ public class MemberService {
    >     ```
    >
    >     - 원래는 `url: jdbc:h2:mem:test`를 써주어야하지만 스프링 부트에서는 없어도 자동으로 메모리에서 테스트를 하게끔 설정을 해준다고 한다. 따라서 없어도 된다.
+
+<br>
+
+## 상품 도메인 개발
+
+> 상품 관리에 대한 도메인, 비즈니스 로직 등을 개발한다.
+
+- #### 상품 엔티티에 비즈니스 로직 추가
+
+  1. `domain/item/Item`에 비즈니스 로직을 추가해준다.
+
+     ```java
+     public abstract class Item {
+     
+         @Id
+         @GeneratedValue
+         @Column(name = "item_id")
+         private Long id;
+     
+         private String name;
+         private int price;
+         private int stockQuantity;
+     
+         @ManyToMany(mappedBy = "items")
+         private List<Category> categories = new ArrayList<>();
+     
+         //==비즈니스 로직==//
+         /**
+          * stock 증가
+          */
+         public void addStock(int quantity) {
+             this.stockQuantity += quantity;
+         }
+     
+         /**
+          * stock 감소
+          */
+         public void removeStock(int quantity) {
+             int restStock = this.stockQuantity - quantity;
+             if (restStock < 0) {
+                 throw new NotEnoughStockException("need more stock");
+             }
+             this.stockQuantity = restStock;
+         }
+     }
+     ```
+
+     > 재고수량과 같이 엔티티의 값을 바꾸는 것은 따로 서비스나 리파지토리보다 엔티티에 로직을 넣어주는 것이 관리하기에도 좋고 더욱 객체지향적인 방법에 가깝다고한다
+
+  2. 재고를 관리할 때 exception관리
+     - exception들만 따로 관리하기 위해 패키지를 만들어준다.
+     - `RuntimeException`을 extends해주고 전부 overriding해준다.
