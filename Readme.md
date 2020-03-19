@@ -813,4 +813,43 @@ public class MemberService {
     
     ```
 
+- #### 상품 서비스
+
+  - `ItemService`생성
+
+    ```java
+    package jpabook.jpashop.service;
     
+    import jpabook.jpashop.dommain.item.Item;
+    import jpabook.jpashop.repository.ItemRepository;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.stereotype.Service;
+    import org.springframework.transaction.annotation.Transactional;
+    
+    import java.util.List;
+    
+    @Service
+    @Transactional(readOnly = true)
+    @RequiredArgsConstructor
+    public class ItemService {
+    
+        private final ItemRepository itemRepository;
+    
+        @Transactional
+        public void saveItem(Item item) {
+            itemRepository.save(item);
+        }
+    
+        public List<Item> findItems() {
+            return itemRepository.findAll();
+        }
+    
+        public Item findOne(Long itemId) {
+            return itemRepository.findOne(itemId);
+        }
+    
+    }
+    
+    ```
+
+    > 이 서비스는 `ItemRepository`를 위임한 것 뿐으로 그냥 컨트롤러에서 바로 리포지토리에 접근을 해도 되는 것이기 때문에 굳이 이렇게 해야되냐는 것은 고민해볼 문제이다.
