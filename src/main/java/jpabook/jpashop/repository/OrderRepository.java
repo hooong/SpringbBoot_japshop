@@ -21,6 +21,6 @@ public class OrderRepository {
         return em.find(Order.class, id);
     }
 
-    // 주문 전체 내역
+    // 주문 검색기능
 //    public List<Order> findAll(OrderSearch orderSearch) {}
 }

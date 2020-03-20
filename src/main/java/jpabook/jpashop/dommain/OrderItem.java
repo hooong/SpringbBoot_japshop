@@ -1,7 +1,9 @@
 package jpabook.jpashop.dommain;
 
 import jpabook.jpashop.dommain.item.Item;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -10,6 +12,7 @@ import static javax.persistence.FetchType.*;
 
 @Entity
 @Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)  // 서비스에서 생성자를 사용하지 못하게 함.
 public class OrderItem {
 
     @Id @GeneratedValue
