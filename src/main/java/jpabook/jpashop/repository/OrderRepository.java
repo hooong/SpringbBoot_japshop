@@ -24,3 +24,4 @@ public class OrderRepository {
     // 주문 검색기능
 //    public List<Order> findAll(OrderSearch orderSearch) {}
 }
+

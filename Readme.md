@@ -1032,3 +1032,125 @@ public class MemberService {
   ```
 
   > - 생성 메서드를 만들어 놓고 주문 엔티티를 생성할 때 사용한다. 복잡한 연관관계를 가지고 있는 엔티티는 별도로 생성메서드를 만드는 것이 좋다. 
+
+  <br>
+
+- #### 주문 리포지토리 개발
+
+  - `OrderRepositoty`
+
+    ```java
+    package jpabook.jpashop.repository;
+    
+    import jpabook.jpashop.dommain.Order;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.stereotype.Repository;
+    
+    import javax.persistence.EntityManager;
+    import java.util.List;
+    
+    @Repository
+    @RequiredArgsConstructor
+    public class OrderRepository {
+    
+        private final EntityManager em;
+    
+        public void save(Order order) {
+            em.persist(order);
+        }
+    
+        public Order findOne(Long id) {
+            return em.find(Order.class, id);
+        }
+    
+        // 주문 검색기능
+    //    public List<Order> findAll(OrderSearch orderSearch) {}
+    }
+    
+    ```
+
+    <br>
+
+- #### 주문 서비스 개발
+
+  > 주문과 주문 취소 서비스를 구현한다.
+
+  - `OrderService`
+
+    ```java
+    package jpabook.jpashop.service;
+    
+    import jpabook.jpashop.dommain.Delivery;
+    import jpabook.jpashop.dommain.Member;
+    import jpabook.jpashop.dommain.Order;
+    import jpabook.jpashop.dommain.OrderItem;
+    import jpabook.jpashop.dommain.item.Item;
+    import jpabook.jpashop.repository.ItemRepository;
+    import jpabook.jpashop.repository.MemberRepository;
+    import jpabook.jpashop.repository.OrderRepository;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.stereotype.Service;
+    import org.springframework.transaction.annotation.Transactional;
+    
+    import java.util.List;
+    
+    @Service
+    @Transactional(readOnly = true)
+    @RequiredArgsConstructor
+    public class OrderService {
+    
+        private final OrderRepository orderRepository;
+        private final MemberRepository memberRepository;
+        private final ItemRepository itemRepository;
+    
+        /**
+         * 주문
+        */
+        @Transactional
+        public Long order(Long memberId, Long itemId, int count) {
+            // 엔티티 조회
+            Member member = memberRepository.findOne(memberId);
+            Item item = itemRepository.findOne(itemId);
+    
+            // 배송정보 생성
+            Delivery delivery = new Delivery();
+            delivery.setAddress(member.getAddress());
+    
+            // 주문상품 생성
+            OrderItem orderItem = OrderItem.createOrderItem(item, item.getPrice(), count);
+    
+            // 주문 생성
+            Order order = Order.createOrder(member, delivery, orderItem);
+    
+            // 주문 저장
+            orderRepository.save(order);    // cascade All옵션 덕분에 가능. (private Owner일 경우에 써주는 것이 좋다.)
+          
+            /* 이 경우에는 delivery와 orderItem이 Order만이 사용하기 때문에 casecade all을 설정해 order가 persist될때 강제로 모두 persist가 되게끔 한것이다. 만약 delivery가 다른 곳에서도 사용이 된다면 casecade를 사용하지 말고 별도의 repository를 만들어서 persist를 해주어야한다.*/
+    
+            return order.getId();
+    
+        }
+    
+        /**
+         * 취소
+         */
+        @Transactional
+        public void cancelOrder(Long orderId) {
+            // 주문 엔티티 조회
+            Order order = orderRepository.findOne(orderId);
+            // 주문 취소
+            order.cancel();
+        }
+    
+        /**
+         * 검색
+         */
+     /*   public List<Order> findOrders(OrderSearch orderSearch) {
+            return orderRepository.findAll(orderSearch);
+        }*/
+    }
+    
+    ```
+
+    > - 주문 서비스의 주문과 취소 메서드의 비즈니스 로직의 대부분을 미리 엔티티에 만들어 놓았다. 이렇게 개발하는 모델을 `도메인 모델 패턴`이라하고, 반대로 대부분의 비즈니스 로직이 서비스 계층에서 처리를 하는 모델을 `트랜잭션 스크립트 패턴`  문맥에 따라서 trade-off관계이므로 잘 고려해서 구현해야한다.
+    > - `Order`, `OrderItem` 엔티티에 `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 에노테이션을 달아놓음으로 서비스 계층에서 `new Order()`로 주문을 생성하는 것을 제약하는 것도 유지보수에 좋은 방법이 될 수 있다.
