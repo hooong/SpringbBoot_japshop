@@ -437,6 +437,7 @@
     ```
 
   
+
 <br>
 
 ## 애플리케이션 구현 준비
@@ -853,3 +854,181 @@ public class MemberService {
     ```
 
     > 이 서비스는 `ItemRepository`를 위임한 것 뿐으로 그냥 컨트롤러에서 바로 리포지토리에 접근을 해도 되는 것이기 때문에 굳이 이렇게 해야되냐는 것은 고민해볼 문제이다.
+
+<br>
+
+## 주문 도메인 개발
+
+> 회원과 상품 도메인을 모두 개발하였다면 이제는 주문과 주문 취소와 같은 주문과 관련된 로직을 개발해본다.
+
+- #### 주문, 주문 상품 엔티티 개발
+
+  > 주문과 주문 상품의 엔티티에 생성 메서드 및 비즈니스 로직(주문 취소)과 조회 로직(주문 전체 가격 조회)을 구현한다.
+
+  - `Order`
+
+  ```java
+  package jpabook.jpashop.dommain;
+  
+  import lombok.Getter;
+  import lombok.Setter;
+  
+  import javax.persistence.*;
+  import java.time.LocalDateTime;
+  import java.util.ArrayList;
+  import java.util.List;
+  
+  import static javax.persistence.FetchType.*;
+  
+  @Entity
+  @Table(name = "orders")
+  @Getter @Setter
+  public class Order {
+  
+      @Id @GeneratedValue
+      @Column(name = "order_id")
+      private Long id;
+  
+      @ManyToOne(fetch = LAZY)
+      @JoinColumn(name = "member_id")     // FK
+      private Member member;
+  
+      @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)   // 외래키로 사용(mappedBy)
+      private List<OrderItem> orderItems = new ArrayList<>();
+  
+      @OneToOne(fetch = LAZY, cascade = CascadeType.ALL)  // casecade ALL로 한번의 persist로도 전부 persist가 된다.
+      @JoinColumn(name = "delivery_id")   // FK
+      private Delivery delivery;
+  
+      // order_date
+      private LocalDateTime orderDate;    // 주문시간
+  
+      @Enumerated(EnumType.STRING)
+      private OrderStatus status;     // 주문상태 [ORDER, CANCEL]
+  
+      //==연관관계 메서드==//
+      public void setMember(Member member) {
+          this.member = member;
+          member.getOrders().add(this);
+      }
+  
+      public void addOrderItem(OrderItem orderItem) {
+          orderItems.add(orderItem);
+          orderItem.setOrder(this);
+      }
+  
+      public void setDelivery(Delivery delivery) {
+          this.delivery = delivery;
+          delivery.setOrder(this);
+      }
+  
+      //== 생성 메서드 ==//
+      public static Order createOrder(Member member, Delivery delivery, OrderItem... orderItems) {
+          Order order = new Order();
+          order.setMember(member);
+          order.setDelivery(delivery);
+          // ...(가변인자)를 사용 여러개가 들어올수도 있음
+          for (OrderItem orderItem : orderItems) {
+              order.addOrderItem(orderItem);
+          }
+          order.setStatus(OrderStatus.ORDER);
+          order.setOrderDate(LocalDateTime.now());
+          return order;
+      }
+  
+      //==비스니스 로직==//
+      /**
+       * 주문 취소
+       */
+      public void cancel() {
+          // 배송이 이미 완료되었으면 예외 발생
+          if (delivery.getStatus() == DeliveryStatus.COMP) {
+              throw new IllegalStateException("이미 배송완료 된 상품은 취소가 불가능합니다.");
+          }
+  
+          this.setStatus(OrderStatus.CANCEL);
+          for (OrderItem orderItem : orderItems) {
+              orderItem.cancel();
+          }
+      }
+  
+      //==조회 로직==//
+      /**
+       * 전체 주문 가격 조회
+       */
+      public int getTotalPrice() {
+          return orderItems.stream().mapToInt(OrderItem::getTotalPrice).sum();
+  
+          // 아래와 같은 로직을 위의 stream을 사용해 한줄로 가능.
+  //        int totalPrice = 0;
+  //        for (OrderItem orderItem : orderItems){
+  //            totalPrice += orderItem.getTotalPrice();
+  //        }
+  //        return totalPrice;
+      }
+  
+  }
+  ```
+
+  - `OrderItem`
+
+  ```java
+  package jpabook.jpashop.dommain;
+  
+  import jpabook.jpashop.dommain.item.Item;
+  import lombok.Getter;
+  import lombok.Setter;
+  
+  import javax.persistence.*;
+  
+  import static javax.persistence.FetchType.*;
+  
+  @Entity
+  @Getter @Setter
+  public class OrderItem {
+  
+      @Id @GeneratedValue
+      @Column(name = "order_item_id")
+      private Long id;
+  
+      @ManyToOne(fetch = LAZY)
+      @JoinColumn(name = "item_id")
+      private Item item;
+  
+      @ManyToOne(fetch = LAZY)
+      @JoinColumn(name = "order_id")
+      private Order order;
+  
+      private int orderPrice; // 주문 가격
+      private int count;  // 주문 수량
+  
+      //==생성 메서드==//
+      public static OrderItem createOrderItem(Item item, int orderPrice, int count) {
+          OrderItem orderItem = new OrderItem();
+          orderItem.setItem(item);
+          // 여기서 item의 price를 쓰지 않는 이유는 쿠폰이나 할인 같은 경우를 생각하는 것임.
+          orderItem.setOrderPrice(orderPrice);
+          orderItem.setCount(count);
+  
+          item.removeStock(count);
+          return orderItem;
+      }
+  
+      //==비즈니스 로직==//
+      public void cancel() {
+          // 주문 아이템이 가지고 있는 Item의 Stock을 주문수량인 count만큼 다시 더해줌.
+          getItem().addStock(count);
+      }
+  
+      //==조회 로직==//
+      /**
+       * 주문 전체 가격 조회
+       */
+      public int getTotalPrice() {
+          return orderPrice * count;
+      }
+  }
+  
+  ```
+
+  > - 생성 메서드를 만들어 놓고 주문 엔티티를 생성할 때 사용한다. 복잡한 연관관계를 가지고 있는 엔티티는 별도로 생성메서드를 만드는 것이 좋다.
