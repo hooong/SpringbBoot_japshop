@@ -1155,3 +1155,114 @@ public class MemberService {
     > - 주문 서비스의 주문과 취소 메서드의 비즈니스 로직의 대부분을 미리 엔티티에 만들어 놓았다. 이렇게 개발하는 모델을 `도메인 모델 패턴`이라하고, 반대로 대부분의 비즈니스 로직이 서비스 계층에서 처리를 하는 모델을 `트랜잭션 스크립트 패턴`  문맥에 따라서 trade-off관계이므로 잘 고려해서 구현해야한다.
     > - `Order`, `OrderItem` 엔티티에 `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 에노테이션을 달아놓음으로 서비스 계층에서 `new Order()`로 주문을 생성하는 것을 제약하는 것도 유지보수에 좋은 방법이 될 수 있다.
 
+- #### 주문 기능 테스트
+
+  - `OrderServiceTest`
+
+    ```java
+    package jpabook.jpashop.service;
+    
+    import jpabook.jpashop.dommain.Address;
+    import jpabook.jpashop.dommain.Member;
+    import jpabook.jpashop.dommain.Order;
+    import jpabook.jpashop.dommain.OrderStatus;
+    import jpabook.jpashop.dommain.item.Book;
+    import jpabook.jpashop.exception.NotEnoughStockException;
+    import jpabook.jpashop.repository.OrderRepository;
+    import org.junit.Test;
+    import org.junit.runner.RunWith;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.boot.test.context.SpringBootTest;
+    import org.springframework.test.context.junit4.SpringRunner;
+    import org.springframework.transaction.annotation.Transactional;
+    
+    import javax.persistence.EntityManager;
+    
+    import static org.junit.Assert.*;
+    
+    @RunWith(SpringRunner.class)
+    @SpringBootTest
+    @Transactional
+    public class OrderServiceTest {
+    
+        @Autowired EntityManager em;
+        @Autowired OrderService orderService;
+        @Autowired OrderRepository orderRepository;
+    
+        @Test
+        public void 상품주문() throws Exception {
+            //given
+            Member member = createMember();
+    
+            Book book = createBook("시골 JPA", 10000, 10);
+    
+            int orderCount = 2;
+    
+            //when
+            Long orderId = orderService.order(member.getId(), book.getId(), orderCount);
+    
+            //then
+            Order getOrder = orderRepository.findOne(orderId);
+    
+            assertEquals("상품 주민시 상태는 ORDER", OrderStatus.ORDER, getOrder.getStatus());
+            assertEquals("주문한 상품 종류 수가 정확해야 한다.", 1, getOrder.getOrderItems().size());
+            assertEquals("주문 가격은 가격 * 수량이다.", 10000 * orderCount, getOrder.getTotalPrice());
+            assertEquals("주문 수량만큼 재고가 줄어야한다.", 8, book.getStockQuantity());
+        }
+    
+        @Test(expected = NotEnoughStockException.class)
+        public void 상품주문_재고수량초과() throws Exception {
+            //given
+            Member member = createMember();
+            Book book = createBook("시골 JPA", 10000, 10);
+    
+            int orderCount = 11;
+    
+            //when
+            orderService.order(member.getId(), book.getId(), orderCount);
+    
+            //then
+            fail("재교 수량 부족 예외가 발생해야 한다.");
+        }
+    
+        @Test
+        public void 주문취소() throws Exception {
+            //given
+            Member member = createMember();
+            Book book = createBook("시골 JPA", 10000, 10);
+    
+            int orderCount = 2;
+    
+            Long orderId = orderService.order(member.getId(), book.getId(), orderCount);
+    
+            //when
+            orderService.cancelOrder(orderId);
+    
+            //then
+            Order getOrder = orderRepository.findOne(orderId);
+    
+            assertEquals("주문 취소시 상태는 CAMCEL이다.", OrderStatus.CANCEL, getOrder.getStatus());
+            assertEquals("주문이 취소된 상품은 그만큼 재고가 증가해야한다.", 10, book.getStockQuantity());
+        }
+    
+        private Book createBook(String name, int price, int stockQuantity) {
+            Book book = new Book();
+            book.setName(name);			// cmd + Opt + p를 누르면 변수로 지정
+            book.setPrice(price);
+            book.setStockQuantity(stockQuantity);
+            em.persist(book);
+            return book;
+        }
+    
+        private Member createMember() {
+            Member member = new Member();
+            member.setName("회원1");
+            member.setAddress(new Address("서울", "강가", "123-123"));
+            em.persist(member);
+            return member;
+        }
+    }
+    ```
+
+    > 위의 테스트는 통합테스트로 실무에서는 엔티티 수준에서의 단위테스팅부터 꼼꼼히 작성하는 것이 좋다.
+
