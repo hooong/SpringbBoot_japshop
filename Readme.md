@@ -1154,3 +1154,4 @@ public class MemberService {
 
     > - 주문 서비스의 주문과 취소 메서드의 비즈니스 로직의 대부분을 미리 엔티티에 만들어 놓았다. 이렇게 개발하는 모델을 `도메인 모델 패턴`이라하고, 반대로 대부분의 비즈니스 로직이 서비스 계층에서 처리를 하는 모델을 `트랜잭션 스크립트 패턴`  문맥에 따라서 trade-off관계이므로 잘 고려해서 구현해야한다.
     > - `Order`, `OrderItem` 엔티티에 `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 에노테이션을 달아놓음으로 서비스 계층에서 `new Order()`로 주문을 생성하는 것을 제약하는 것도 유지보수에 좋은 방법이 될 수 있다.
+
