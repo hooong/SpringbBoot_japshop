@@ -1627,7 +1627,7 @@ public class MemberService {
   - `MemberController` 생성
 
     ```java
-    package jpabook.jpashop.controller;
+    > package jpabook.jpashop.controller;
     
     import jpabook.jpashop.dommain.Address;
     import jpabook.jpashop.dommain.Member;
@@ -1676,8 +1676,11 @@ public class MemberService {
             return "redirect:/";
         }
     }
-    
     ```
+
+    > - GetMapping으로 회원 등록 화면을 띄워주고 PostMapping으로 form에서 입력받은 은  member정보로 MemberServiece의 join을 이용하여 회원을 등록시킨다.
+    > - @Valid를 사용하여 memberForm에서 validation이 필요한 필드를 자동으로 검사를 해주고 BindingResult를 사용해 에러가 있다면 에러에 대한 정보를 담고 다시 `members/createMemberForm`으로 넘겨준다.
+    > - 회원 등록을 마쳤다면 `redirect:` 를 사용해서 재로딩 없이 다시 홈으로 보내준다.
 
   - `MemberForm` 생성
 
@@ -1699,8 +1702,9 @@ public class MemberService {
         private String street;
         private String zipcode;
     }
-    
     ```
+
+    > - @NotEmpty 어노테이션을 사용하여 name필드의 입력이 꼭 있어야 됨을 확인하고 에러가 발생한다면 넘겨줄 message를 설정한다.
 
   - `createMemberForm.html` 생성
 
@@ -1744,7 +1748,9 @@ public class MemberService {
     </html>
     ```
 
-    
-
-    
+  > - `th:object="${memberForm}"`옵션을 통해 controller에서 넘어오는  memberForm을 받을 수 있다.
+  > - `th:field="*{name}"`는 input 태그에서 `id="name" name="name"`를 대신해서 생성해준다.
+  > -  `*{name}`는 Getter, Setter를 기반으로 사용이 가능하여 memberForm에 저장되어있는 것을 가져오거나 저장을 한다.
+  > - `th:class="${#fields.hasErrors('name')}? 'form-control fieldError' : 'form-control'"`에서는 BindingResult로 넘어오는 `fields`에서 에러가 있다면 왼쪽을 실행 없다면 오른쪽을 실행함으로 css를 변경할 수도 있다.
+  > - `<p th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Incorrect date</p>`는 에러가 있다면 validation에서 설정해준 해당 message를 띄워준다.
 
