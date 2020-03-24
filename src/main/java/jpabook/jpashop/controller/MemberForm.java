@@ -1,5 +1,6 @@
 package jpabook.jpashop.controller;
 
+import jpabook.jpashop.dommain.Member;
 import lombok.Getter;
 import lombok.Setter;
 

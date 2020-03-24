@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -45,5 +46,17 @@ public class MemberController {
 
         memberService.join(member);
         return "redirect:/";
+    }
+
+    @GetMapping("/members")
+    public String list(Model model) {
+
+        /* 이 과정에서도 엔티티와 살짝이라도 다르게 화면에 보여준다면 DTO(Data Transfer Object)를 사용하는게 좋다.
+        *  물론 템플릿 엔진에서는 엔티티를 넘겨 보여주고 싶은 필드만 보여주어도 되지만
+        *  API를 만들때는 꼭 DTO를 사용해야한다. 그렇지 않으면 API스펙이 바뀌어 정말 나쁘다.*/
+
+        List<Member> members = memberService.findMembers();
+        model.addAttribute("members", members);
+        return "members/memberList";
     }
 }
