@@ -45,6 +45,8 @@
 - ##### 웹 계층 개발
 
   - 홈 화면과 레이아웃 
+  - 회원 등록
+  - 회원 목록 조회
 
 ----
 
@@ -1753,4 +1755,56 @@ public class MemberService {
   > -  `*{name}`는 Getter, Setter를 기반으로 사용이 가능하여 memberForm에 저장되어있는 것을 가져오거나 저장을 한다.
   > - `th:class="${#fields.hasErrors('name')}? 'form-control fieldError' : 'form-control'"`에서는 BindingResult로 넘어오는 `fields`에서 에러가 있다면 왼쪽을 실행 없다면 오른쪽을 실행함으로 css를 변경할 수도 있다.
   > - `<p th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Incorrect date</p>`는 에러가 있다면 validation에서 설정해준 해당 message를 띄워준다.
+
+- #### 회원 목록 조회
+
+  - `MemberController`에 `@GetMapping`을 해준다.
+
+    ```java
+    @GetMapping("/members")
+    public String list(Model model) {
+    
+      /* 이 과정에서도 엔티티와 살짝이라도 다르게 화면에 보여준다면 DTO(Data Transfer Object)를 사용하는게 좋다.
+            *  물론 템플릿 엔진에서는 엔티티를 넘겨 보여주고 싶은 필드만 보여주어도 되지만
+            *  API를 만들때는 꼭 DTO를 사용해야한다. 그렇지 않으면 API스펙이 바뀌어 정말 나쁘다.*/
+    
+      List<Member> members = memberService.findMembers();
+      model.addAttribute("members", members);
+      return "members/memberList";
+    }
+    ```
+
+  - `MemberList.html` 생성
+
+    ```html
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org"> <head th:replace="fragments/header :: header" /> <body>
+    <div class="container">
+        <div th:replace="fragments/bodyHeader :: bodyHeader" />
+        <div>
+            <table class="table table-striped"> <thead>
+            <tr>
+                <th>#</th>
+                <th>이름</th> <th>도시</th> <th>주소</th> <th>우편번호</th>
+            </tr>
+            </thead>
+                <tbody>
+                <tr th:each="member : ${members}">
+                    <td th:text="${member.id}"></td>
+                    <td th:text="${member.name}"></td>
+                    <td th:text="${member.address?.city}"></td>
+                    <td th:text="${member.address?.street}"></td>
+                    <td th:text="${member.address?.zipcode}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:replace="fragments/footer :: footer" />
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+    > - ` <tr th:each="member : ${members}">` 타임리프의 장점인 html태그를 그대로 사용한다는 점이다.
+    > - `<td th:text="${member.address?.city}"></td>` 여기서 `?`는 null값일때 실행하지 않는다는 문법이다.
 
