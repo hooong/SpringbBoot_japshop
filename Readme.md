@@ -1417,3 +1417,210 @@ public class MemberService {
     > - `findAllByCriteria` : JAP 표준으로 만들어진  Criteria를 사용하는 방법
     > - 두 방법 모두 개발에서나 유지보수에나 치명적인 단점들이 존재하는 방법으로 실무에서 `querydsl`을 사용하는 것이 좋다고 하는데 이것은 추후에 알려준다고 함.
 
+<br>
+
+## 웹 계층 개발
+
+> 이제 마지막으로 컨트롤러와 레이아웃들을 다루는 웹 계층을 개발하면 예제가 거의 완성이 된다.
+
+- ### 홈 화면과 레이아웃
+
+  > 홈에 대한 컨트롤러와 홈에서 보여줄 레이아웃을 구현한다.
+
+  ##### 1.  `controller` 패키지 생성
+
+  ##### 2. `HomeController` 생성
+
+  ``` java
+  package jpabook.jpashop.controller;
+  
+  import lombok.extern.slf4j.Slf4j;
+  import org.slf4j.LoggerFactory;
+  import org.springframework.stereotype.Controller;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  
+  import java.util.logging.Logger;
+  
+  @Controller
+  @Slf4j  // logger 관련 어노테이션
+  public class HomeController {
+  
+  //    Logger log = LoggerFactory.getLogger(getClass());
+  
+      @RequestMapping("/")
+      public String home() {
+          log.info("home controller");
+          return "home";
+      }
+  }
+  ```
+
+  > - "/"를 @RequestMapping으로 인덱스 홈을 맵핑해준다.
+  > - log를 찍어주기 위하여 `Logger log = LoggerFactory.getLogger(getClass());`사용하면 되지만 lombok을 사용하여  `@Slf4j` 어노테이션을 사용하면 자동으로 `log.info()`와 같이 사용이 가능하다.
+
+  ##### 3. 각종 html 파일 생성
+
+  - `home.html`
+
+    ```html
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="fragments/header :: header">
+        <title>Hello</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    </head>
+    
+    <body>
+    <div class="container">
+        <div th:replace="fragments/bodyHeader :: bodyHeader" />
+        <div class="jumbotron"> <h1>HELLO SHOP</h1>
+            <p class="lead">회원 기능</p>
+            <p>
+                <a class="btn btn-lg btn-secondary" href="/members/new">회원 가입</a>
+                <a class="btn btn-lg btn-secondary" href="/members">회원 목록</a>
+            </p>
+            <p class="lead">상품 기능</p>
+            <p>
+                <a class="btn btn-lg btn-dark" href="/items/new">상품 등록</a>
+                <a class="btn btn-lg btn-dark" href="/items">상품 목록</a>
+            </p>
+            <p class="lead">주문 기능</p>
+            <p>
+                <a class="btn btn-lg btn-info" href="/order">상품 주문</a>
+                <a class="btn btn-lg btn-info" href="/orders">주문 내역</a>
+            </p>
+        </div>
+    
+        <div th:replace="fragments/footer :: footer" />
+    </div> <!-- /container -->
+    
+    </body>
+    </html>
+    ```
+
+    > - Thymeleaf를 사용
+    >
+    > - `<head th:replace="fragments/header :: header">`와 같이 `header.html`을 include하여 보여줄 수 있다. [타임리브 Doc에서 layout활용법](https://www.thymeleaf.org/doc/articles/layouts.html)에서 볼 수 있듯이 Include-style layouts, Hierarchical-style layouts가 있는데 위에서 한것이  include-style로 살짝 무식한 방법으로 코드 중복이 많을 수 있다. 따라서 실무에서는 Hierarchical-style을 적용하는 것이 좋다.
+    >
+    > - fragments를 사용하기 위해서 `templates/fragments` 경로에 `header.html`, `bodyHeader.html`, `footer.html`을 만들어준다.
+    >
+    > - `header.html`
+    >
+    >   ```html
+    >   <!DOCTYPE html>
+    >   <html xmlns:th="http://www.thymeleaf.org"> <head th:fragment="header">
+    >       <!-- Required meta tags -->
+    >       <meta charset="utf-8">
+    >       <meta name="viewport" content="width=device-width, initial-scale=1, shrink- to-fit=no">
+    >       <!-- Bootstrap CSS -->
+    >       <link rel="stylesheet" href="/css/bootstrap.min.css" integrity="sha384- ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    >       <!-- Custom styles for this template -->
+    >       <link href="/css/jumbotron-narrow.css" rel="stylesheet"> <title>Hello, world!</title>
+    >   </head>
+    >   ```
+    >
+    > - `bodyHeader.html`
+    >
+    >   ```html
+    >   <!DOCTYPE html>
+    >   <html xmlns:th="http://www.thymeleaf.org"> <div class="header" th:fragment="bodyHeader">
+    >       <ul class="nav nav-pills pull-right"> <li><a href="/">Home</a></li>
+    >       </ul>
+    >       <a href="/"><h3 class="text-muted">HELLO SHOP</h3></a> </div>
+    >   ```
+    >
+    > - `footer.html`
+    >
+    >   ```html
+    >   <!DOCTYPE html>
+    >   <html xmlns:th="http://www.thymeleaf.org"> <div class="footer" th:fragment="footer">
+    >       <p>&copy; Hello Shop V2</p>
+    >   </div>
+    >   ```
+    >
+    > - 여기까지하고 실행하여 `localhost:8080`으로 접속해보면 아래와 같은 상태이고 해당 로그도 확인해볼 수 있다.
+    >
+    >   <img width="287" alt="Screen Shot 2020-03-24 at 3 54 40 PM" src="https://user-images.githubusercontent.com/37801041/77399540-02ceb780-6ded-11ea-9701-74c8d622c530.png">
+    >
+    >   ```
+    >   2020-03-24 16:10:21.790  INFO 74882 --- [nio-8080-exec-4] j.jpashop.controller.HomeController      : home controller
+    >   ```
+
+  ##### 4. Bootstrap 적용
+
+  - 해당 프로젝트는 부트스트랩 4.3.1버전 사용
+
+    - [부트스트랩 다운로드](https://getbootstrap.com/docs/4.3/getting-started/download/)
+
+  - css와  js폴더를 모두  `resources/static`폴더에 넣어준다.
+
+  - 부트스트랩을 적용하면 아래와 같다.
+
+    <img width="1165" alt="Screen Shot 2020-03-24 at 4 05 44 PM" src="https://user-images.githubusercontent.com/37801041/77399809-838db380-6ded-11ea-8d81-4521256a3f3d.png">
+
+  - 각 요소들을 정렬하기 위해서 css폴더에 `jumbotron-narrow.css`파일을 만들어준다.
+
+    ```css
+    /* Space out content a bit */
+    body {
+        padding-top: 20px; padding-bottom: 20px;
+    }
+    /* Everything but the jumbotron gets side spacing for mobile first views */
+    .header, .marketing, .footer {
+        padding-left: 15px;
+        padding-right: 15px; }
+    /* Custom page header */
+    .header {
+        border-bottom: 1px solid #e5e5e5;
+    }
+    /* Make the masthead heading the same height as the navigation */
+    .header h3 { margin-top: 0; margin-bottom: 0; line-height: 40px; padding-bottom: 19px;
+    }
+    /* Custom page footer */
+    .footer { padding-top: 19px;
+    
+        color: #777;
+        border-top: 1px solid #e5e5e5; }
+    /* Customize container */
+    @media (min-width: 768px) { .container {
+        max-width: 730px; }
+    }
+    .container-narrow > hr {
+        margin: 30px 0;
+    }
+    /* Main marketing message and sign up button */
+    .jumbotron {
+        text-align: center; border-bottom: 1px solid #e5e5e5;
+    }
+    .jumbotron .btn {
+        font-size: 21px;
+        padding: 14px 24px;
+    }
+    /* Supporting marketing content */
+    .marketing { margin: 40px 0;
+    }
+    .marketing p + h4 {
+        margin-top: 28px; }
+    /* Responsive: Portrait tablets and up */
+    @media screen and (min-width: 768px) {
+        /* Remove the padding we set earlier */ .header,
+    .marketing,
+    .footer {
+        padding-left: 0;
+    
+        padding-right: 0; }
+        /* Space out the masthead */
+        .header { margin-bottom: 30px;
+        }
+        /* Remove the bottom border on the jumbotron for visual effect */
+        .jumbotron { border-bottom: 0;
+        } 
+    }
+    ```
+
+    <img width="760" alt="Screen Shot 2020-03-24 at 4 10 29 PM" src="https://user-images.githubusercontent.com/37801041/77399952-c3ed3180-6ded-11ea-8172-fcb7d5eef668.png">
+
+  <br>
+
+- 
+
