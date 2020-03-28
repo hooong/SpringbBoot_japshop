@@ -1624,7 +1624,7 @@ public class MemberService {
 
   <br>
 
-- #### 회원등록
+- ### 회원등록
 
   - `MemberController` 생성
 
@@ -1756,7 +1756,7 @@ public class MemberService {
   > - `th:class="${#fields.hasErrors('name')}? 'form-control fieldError' : 'form-control'"`에서는 BindingResult로 넘어오는 `fields`에서 에러가 있다면 왼쪽을 실행 없다면 오른쪽을 실행함으로 css를 변경할 수도 있다.
   > - `<p th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Incorrect date</p>`는 에러가 있다면 validation에서 설정해준 해당 message를 띄워준다.
 
-- #### 회원 목록 조회
+- ### 회원 목록 조회
 
   - `MemberController`에 `@GetMapping`을 해준다.
 
@@ -1808,3 +1808,112 @@ public class MemberService {
     > - ` <tr th:each="member : ${members}">` 타임리프의 장점인 html태그를 그대로 사용한다는 점이다.
     > - `<td th:text="${member.address?.city}"></td>` 여기서 `?`는 null값일때 실행하지 않는다는 문법이다.
 
+- ### 상품 등록
+
+  - `BookForm` 생성
+
+    ```java
+    package jpabook.jpashop.controller;
+    
+    import lombok.Getter;
+    import lombok.Setter;
+    
+    @Getter @Setter
+    public class BookForm {
+    
+        private Long id;
+    
+        private String name;
+        private int price;
+        private int stockQuantity;
+    
+        private String author;
+        private String isbn;
+    }
+    
+    ```
+
+  - `ItemController` 생성
+
+    ```java
+    package jpabook.jpashop.controller;
+    
+    import jpabook.jpashop.dommain.item.Book;
+    import jpabook.jpashop.service.ItemService;
+    import lombok.Getter;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.stereotype.Controller;
+    import org.springframework.ui.Model;
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.ModelAttribute;
+    import org.springframework.web.bind.annotation.PostMapping;
+    
+    @Controller
+    @RequiredArgsConstructor
+    public class ItemController {
+    
+        private final ItemService itemService;
+    
+        @GetMapping("/items/new")
+        public String createForm(Model model){
+            model.addAttribute("form", new BookForm());
+            return "items/createItemForm";
+        }
+    
+        @PostMapping("/items/new")
+        public String create(BookForm form) {
+    
+            // 실무에서는 Setter를 다 날리고 create를 만들어두는 것이 좋다.
+            Book book = new Book();
+            book.setName(form.getName());
+            book.setPrice(form.getPrice());
+            book.setStockQuantity(form.getStockQuantity());
+            book.setAuthor(form.getAuthor());
+            book.setIsbn(form.getIsbn());
+    
+            itemService.saveItem(book);
+            return "redirect:/";
+        }
+    }
+    
+    ```
+
+  - `resources/templates/items/createItemForm` 생성
+
+    ```html
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org"> <head th:replace="fragments/header :: header" /> <body>
+    <div class="container">
+        <div th:replace="fragments/bodyHeader :: bodyHeader"/>
+        <form th:action="@{/items/new}" th:object="${form}" method="post">
+            <div class="form-group">
+                <label th:for="name">상품명</label>
+                <input type="text" th:field="*{name}" class="form-control"
+                       placeholder="이름을 입력하세요"> </div>
+            <div class="form-group">
+                <label th:for="price">가격</label>
+                <input type="number" th:field="*{price}" class="form-control" placeholder="가격을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label th:for="stockQuantity">수량</label>
+                <input type="number" th:field="*{stockQuantity}" class="form-control" placeholder="수량을 입력하세요"> </div>
+            <div class="form-group">
+                <label th:for="author">저자</label>
+                <input type="text" th:field="*{author}" class="form-control" placeholder="저자를 입력하세요">
+            </div>
+            <div class="form-group">
+                <label th:for="isbn">ISBN</label>
+                <input type="text" th:field="*{isbn}" class="form-control" placeholder="ISBN을 입력하세요">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button> </form>
+        <br/>
+        <div th:replace="fragments/footer :: footer" />
+    </div> <!-- /container -->
+    </body>
+    </html>
+    
+    ```
+
+    
+
+    
