@@ -1914,6 +1914,6 @@ public class MemberService {
     
     ```
 
-    
+    > 실행 후 상품을 등록해보면 `DTYPE`가 `B`로 되어있는 것을 확인할 수 있는데 이것은 `/domain/itme/Book`에서 설정해놓은 `@DiscriminatorValue("B")`에 의해서 그런것이다.
 
     
