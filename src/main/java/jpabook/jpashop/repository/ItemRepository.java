@@ -21,6 +21,9 @@ public class ItemRepository {
         } else {
             // 이미 있는 item을 강제로 업데이트
             em.merge(item);
+            // merge는 결국 itemService에 만든 변경감지 하는 코드랑 똑같다고 볼 수 있다.
+            // merge의 경우 모든 속성이 다시 쓰여지기 때문에 입력되지 않은 필드가 null로 들어갈 수 있다.
+            // 실무에서 merge를 쓰는 것은 좋지 않다.
         }
     }
 

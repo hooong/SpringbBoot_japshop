@@ -1916,4 +1916,138 @@ public class MemberService {
 
     > 실행 후 상품을 등록해보면 `DTYPE`가 `B`로 되어있는 것을 확인할 수 있는데 이것은 `/domain/itme/Book`에서 설정해놓은 `@DiscriminatorValue("B")`에 의해서 그런것이다.
 
+- ### 상품 목록
+
+  - `ItemController`에 맵핑 추가
+
+    ```java
+    @GetMapping("/items")
+    public String list(Model model) {
+      List<Item> items = itemService.findItems();
+      model.addAttribute("items", items);
+      return "items/itemList";
+    }
+    ```
+
+  - `items/itemList.html` 생성
+
+    ```html
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org"> <head th:replace="fragments/header :: header" /> <body>
+    <div class="container">
+        <div th:replace="fragments/bodyHeader :: bodyHeader"/>
+        <div>
+            <table class="table table-striped">
+                <thead> <tr>
+                    <th>#</th> <th>상품명</th> <th>가격</th> <th>재고수량</th> <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${items}">
+                    <td th:text="${item.id}"></td>
+                    <td th:text="${item.name}"></td>
+                    <td th:text="${item.price}"></td>
+                    <td th:text="${item.stockQuantity}"></td> <td>
+                    <a href="#" th:href="@{/items/{id}/edit (id=${item.id})}" class="btn btn-primary" role="button">수정</a>
+                </td> </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:replace="fragments/footer :: footer"/>
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+    <br>
+
+- ### 상품수정
+
+  - `ItemController`에 Getmapping 추가
+
+    ```java
+    @GetMapping("items/{itemId}/edit")
+    public String updateItemForm(@PathVariable("itemId") Long itemId, Model model) {
+      Book item = (Book) itemService.findOne(itemId);
     
+      BookForm form = new BookForm();
+      form.setId(item.getId());
+      form.setName(item.getName());
+      form.setPrice(item.getPrice());
+      form.setStockQuantity(item.getStockQuantity());
+      form.setAuthor(item.getAuthor());
+      form.setIsbn(item.getIsbn());
+    
+      model.addAttribute("form", form);
+      return "items/updateItemForm";
+    }
+    ```
+
+    > @PathVariable을 사용해서 해당 글의 id값을 받는다.
+
+  - `items/updateItemForm.html` 생성
+
+    ```html
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="fragments/header :: header" />
+    <body>
+    <div class="container">
+        <div th:replace="fragments/bodyHeader :: bodyHeader"/>
+    
+        <form th:object="${form}" method="post"> <!-- id -->
+            <input type="hidden" th:field="*{id}" /> <div class="form-group">
+                <label th:for="name">상품명</label>
+                <input type="text" th:field="*{name}" class="form-control"
+                       placeholder="이름을 입력하세요" /> </div>
+            <div class="form-group">
+                <label th:for="price">가격</label>
+                <input type="number" th:field="*{price}" class="form-control" placeholder="가격을 입력하세요" />
+            </div>
+            <div class="form-group">
+                <label th:for="stockQuantity">수량</label>
+                <input type="number" th:field="*{stockQuantity}" class="form-control" placeholder="수량을 입력하세요" />
+            </div>
+            <div class="form-group">
+                <label th:for="author">저자</label>
+                <input type="text" th:field="*{author}" class="form-control"
+                       placeholder="저자를 입력하세요" /> </div>
+            <div class="form-group">
+                <label th:for="isbn">ISBN</label>
+                <input type="text" th:field="*{isbn}" class="form-control"
+                       placeholder="ISBN을 입력하세요" /> </div>
+            <button type="submit" class="btn btn-primary">Submit</button> </form>
+        <div th:replace="fragments/footer :: footer" />
+    </div> <!-- /container -->
+    </body>
+    </html>
+    ```
+
+  - `ItemController`에 Postmapping 추가
+
+    ```java
+    @PostMapping("items/{itemId}/edit")
+        public String updateItem(@ModelAttribute("form") BookForm form, @PathVariable String itemId) {
+            Book book = new Book();
+    
+            book.setId(form.getId());
+            book.setName(form.getName());
+            book.setPrice(form.getPrice());
+            book.setStockQuantity(form.getStockQuantity());
+            book.setAuthor(form.getAuthor());
+            book.setIsbn(form.getIsbn());
+    
+            itemService.saveItem(book);
+            return "redirect:/items";
+        }
+    ```
+
+    > 업데이트를 진행하면서 id값을 위조할 수 있으므로 백엔드 상에서 사용자가 권한을 가지고 있는지를 확인하거나 세션객체를 사용하여 방지해주어야한다. 
+    >
+    > *꿀팁* : opt를 두번 누르면 여러줄을 한번에 골라 수정가능!
+
+    
+
+    
+
+  
